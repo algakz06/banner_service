@@ -41,8 +41,8 @@ func NewApp() *App {
 		bannerUC: bnusecase.NewBannerUseCase(bannerRepo),
 		authUC: authusecase.NewAuthUseCase(
 			authRepo,
-			viper.GetString("auth.salt"),
-			[]byte(viper.GetString("auth.signed_key")),
+			os.Getenv("HASH_SALT"),
+			[]byte(os.Getenv("SIGNED_KEY")),
 			viper.GetDuration("auth.token_ttl"),
 		),
 	}

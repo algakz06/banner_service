@@ -5,7 +5,6 @@ import (
 
 	"github.com/algakz/banner_service/models"
 	"github.com/algakz/banner_service/pkg/banner"
-	"github.com/sirupsen/logrus"
 )
 
 type BannerUseCase struct {
@@ -20,10 +19,11 @@ func NewBannerUseCase(bannerRepo banner.Repository) *BannerUseCase {
 
 func (b *BannerUseCase) GetUserBanner(
 	ctx context.Context,
-	tags_id []int,
+	tag_ids []int,
 	feature_id int,
-) ([]*models.Banner, error) {
-	return nil, nil
+) (models.Banner, error) {
+  banner, err := b.bannerRepo.GetUserBanner(ctx, tag_ids, feature_id)
+  return banner, err
 }
 
 func (b *BannerUseCase) GetBanners(
@@ -34,7 +34,6 @@ func (b *BannerUseCase) GetBanners(
 	offset int,
 ) ([]models.Banner, error) {
   banners, err := b.bannerRepo.GetBanners(ctx, tag_id, feature_id, limit, offset)
-  logrus.Infof("banners got from repo successfully")
 	return banners, err
 }
 

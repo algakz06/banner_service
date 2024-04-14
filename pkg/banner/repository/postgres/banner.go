@@ -22,10 +22,30 @@ func NewBannerPostgres(dbpool *pgxpool.Pool) *BannerPostgres {
 
 func (b *BannerPostgres) GetUserBanner(
 	ctx context.Context,
-	tags_id []int,
+	tag_ids []int,
 	feature_id int,
-) ([]*models.Banner, error) {
-	return nil, nil
+) (models.Banner, error) {
+	sort.Ints(tag_ids)
+	query := `
+  SELECT id, is_active, feature_id, content, created_at, updated_at, ARRAY_AGG(bt.tag_id order by tag_id) as tag_ids
+  FROM banner b
+  JOIN banner_tag bt ON bt.banner_id = b.id
+  WHERE b.feature_id = $1
+  GROUP BY b.id
+  HAVING ARRAY_AGG(bt.tag_id order by tag_id) = $2
+  LIMIT 1
+  `
+	rows, err := b.dbpool.Query(ctx, query, feature_id, tag_ids)
+	if err != nil {
+		logrus.Error(err)
+		return models.Banner{}, err
+	}
+	banner, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Banner])
+	if err != nil {
+		logrus.Error(err)
+		return models.Banner{}, err
+	}
+	return banner, err
 }
 
 func (b *BannerPostgres) GetBanners(
@@ -52,8 +72,8 @@ func (b *BannerPostgres) CreateBanner(
 	banner *models.Banner,
 	user *models.User,
 ) (int, error) {
-  sort.Ints(banner.TagIds)
-  query := `
+	sort.Ints(banner.TagIds)
+	query := `
   SELECT 1
   FROM banner b
   JOIN banner_tag bt ON bt.banner_id = b.id
@@ -62,11 +82,11 @@ func (b *BannerPostgres) CreateBanner(
   HAVING ARRAY_AGG(bt.tag_id order by tag_id) = $2
   LIMIT 1
   `
-  commandTag, _ := b.dbpool.Exec(ctx, query, banner.FeatureId, banner.TagIds)
+	commandTag, _ := b.dbpool.Exec(ctx, query, banner.FeatureId, banner.TagIds)
 
-  if commandTag.RowsAffected() == 1 {
-    return 0, bn.ErrBannerAlreadyExists
-  }
+	if commandTag.RowsAffected() == 1 {
+		return 0, bn.ErrBannerAlreadyExists
+	}
 	tx, err := b.dbpool.Begin(ctx)
 	if err != nil {
 		logrus.Errorf("error occured while starting tx: %s", err.Error())
@@ -224,14 +244,14 @@ func GetBannersByFeatureId(
 		)
 		return nil, err
 	}
-  logrus.Infof("collecting rows started")
+	logrus.Infof("collecting rows started")
 	banners, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Banner])
-  logrus.Infof("collecting rows ended")
+	logrus.Infof("collecting rows ended")
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
 	}
-  logrus.Infof("banners was collected successfully")
+	logrus.Infof("banners was collected successfully")
 	return banners, err
 }
 

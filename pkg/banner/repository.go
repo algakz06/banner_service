@@ -9,9 +9,9 @@ import (
 type Repository interface {
 	GetUserBanner(
 		ctx context.Context,
-		tags []int,
+		tag_ids []int,
 		feature_id int,
-	) ([]*models.Banner, error)
+	) (models.Banner, error)
 	GetBanners(
 		ctx context.Context,
     tag_id int,

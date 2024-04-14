@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,7 +25,41 @@ func NewHandler(useCase bn.UseCase) *Handler {
 }
 
 func (h *Handler) UserGet(ctx *gin.Context) {
-	logrus.Debugf("hello World! from UserGet")
+	user := ctx.MustGet(auth.CtxUserKey).(*models.User)
+	q_tag_ids := ""
+	q_feature_id := ""
+
+	q_tag_ids, _ = ctx.GetQuery("tag_ids")
+	q_feature_id, _ = ctx.GetQuery("feature_id")
+
+	if q_tag_ids == "" || q_feature_id == "" {
+		err := fmt.Errorf("tag_id and feature_id not found")
+		logrus.Error(err)
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	feature_id, err := strconv.Atoi(q_feature_id)
+	if err != nil {
+		logrus.Error(err)
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+  var tag_ids []int
+	err = json.Unmarshal([]byte(q_tag_ids), &tag_ids)
+	if err != nil {
+		logrus.Error(err)
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	banner, err := h.useCase.GetUserBanner(ctx, tag_ids, feature_id)
+  if user.Role == "user" {
+    if !banner.IsActive {
+      ctx.AbortWithStatus(http.StatusNotFound)
+      return
+    }
+  }
+  ctx.JSON(http.StatusOK, banner.Content)
 }
 
 func (h *Handler) Get(ctx *gin.Context) {
@@ -48,10 +83,10 @@ func (h *Handler) Get(ctx *gin.Context) {
 		return
 	}
 
-  tag_id := 0
-  var err error
+	tag_id := 0
+	var err error
 	if q_tag_id != "" {
-    tag_id, err = strconv.Atoi(q_tag_id)
+		tag_id, err = strconv.Atoi(q_tag_id)
 		if err != nil {
 			logrus.Error(err)
 			ctx.AbortWithError(http.StatusBadRequest, err)
@@ -59,8 +94,8 @@ func (h *Handler) Get(ctx *gin.Context) {
 		}
 	}
 
-  feature_id := 0
-  if q_feature_id != "" {
+	feature_id := 0
+	if q_feature_id != "" {
 		feature_id, err = strconv.Atoi(q_feature_id)
 		if err != nil {
 			logrus.Error(err)
@@ -69,39 +104,39 @@ func (h *Handler) Get(ctx *gin.Context) {
 		}
 	}
 
-  q_limit, _ = ctx.GetQuery("limit")
-  q_offset, _ = ctx.GetQuery("offset")
+	q_limit, _ = ctx.GetQuery("limit")
+	q_offset, _ = ctx.GetQuery("offset")
 
-  var limit, offset int
-  if q_limit == "" {
-    limit = 50
-  } else {
-    limit, err = strconv.Atoi(q_limit)
-    if err != nil {
-      logrus.Error(err)
-      ctx.AbortWithError(http.StatusBadRequest, err)
-      return
-    }
-  }
+	var limit, offset int
+	if q_limit == "" {
+		limit = 50
+	} else {
+		limit, err = strconv.Atoi(q_limit)
+		if err != nil {
+			logrus.Error(err)
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+	}
 
-  if q_offset == "" {
-    offset = 0
-  } else {
-    offset, err = strconv.Atoi(q_offset)
-    if err != nil {
-      logrus.Error(err)
-      ctx.AbortWithError(http.StatusBadRequest, err)
-      return
-    }
-  }
+	if q_offset == "" {
+		offset = 0
+	} else {
+		offset, err = strconv.Atoi(q_offset)
+		if err != nil {
+			logrus.Error(err)
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+	}
 
 	banner_list, err := h.useCase.GetBanners(ctx, tag_id, feature_id, limit, offset)
-  if err != nil {
-    logrus.Error(err)
-    ctx.AbortWithError(http.StatusInternalServerError, err)
-    return
-  }
-  ctx.JSON(http.StatusOK, banner_list)
+	if err != nil {
+		logrus.Error(err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, banner_list)
 }
 
 type CreateBanner struct {
@@ -130,15 +165,15 @@ func (h *Handler) Create(ctx *gin.Context) {
 		IsActive:  inp.IsActive,
 	}
 	banner_id, err := h.useCase.CreateBanner(ctx, banner, user)
-  if err != nil {
-    if err == bn.ErrBannerAlreadyExists {
-      ctx.AbortWithError(http.StatusConflict, err)
-    }
-  }
+	if err != nil {
+		if err == bn.ErrBannerAlreadyExists {
+			ctx.AbortWithError(http.StatusConflict, err)
+		}
+	}
 	if err != nil {
 		logrus.Errorf("error returned from useCase.CreateBanner: %s", err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)
-    return
+		return
 	}
 	ctx.JSON(http.StatusCreated, &createBannerResponse{
 		BannerId: banner_id,

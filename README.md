@@ -23,8 +23,8 @@ REST API сервис баннеров с JWT-аутентификацией
 - [x] POST api/banner -- путь создания баннера
 - [x] PATCH api/banner/:id -- путь изменения баннера
 - [x] DELETE api/banner/:id -- путь удаления баннера
-- [] DELETE api/banner -- удаление баннеров по tag_id и/или feature_id
-- [] GET api/banner/:id -- получения 3 последних версий баннера
+- [ ] DELETE api/banner -- удаление баннеров по tag_id и/или feature_id
+- [ ] GET api/banner/:id -- получения 3 последних версий баннера
 
 ### Слои приложения
 - Models layer

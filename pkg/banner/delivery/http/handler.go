@@ -1,22 +1,23 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/algakz/banner_service/models"
 	"github.com/algakz/banner_service/pkg/auth"
-	"github.com/algakz/banner_service/pkg/banner"
+	bn "github.com/algakz/banner_service/pkg/banner"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
-	useCase banner.UseCase
+	useCase bn.UseCase
 }
 
-func NewHandler(useCase banner.UseCase) *Handler {
+func NewHandler(useCase bn.UseCase) *Handler {
 	return &Handler{
 		useCase: useCase,
 	}
@@ -27,6 +28,80 @@ func (h *Handler) UserGet(ctx *gin.Context) {
 }
 
 func (h *Handler) Get(ctx *gin.Context) {
+	user := ctx.MustGet(auth.CtxUserKey).(*models.User)
+	if user.Role != "admin" {
+		ctx.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+	q_tag_id := ""
+	q_feature_id := ""
+	q_limit := ""
+	q_offset := ""
+
+	q_tag_id, _ = ctx.GetQuery("tag_id")
+	q_feature_id, _ = ctx.GetQuery("feature_id")
+
+	if q_tag_id == "" && q_feature_id == "" {
+		err := fmt.Errorf("tag_id and feature_id not found. i should put at least one of them")
+		logrus.Error(err)
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+  tag_id := 0
+  var err error
+	if q_tag_id != "" {
+    tag_id, err = strconv.Atoi(q_tag_id)
+		if err != nil {
+			logrus.Error(err)
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+	}
+
+  feature_id := 0
+  if q_feature_id != "" {
+		feature_id, err = strconv.Atoi(q_feature_id)
+		if err != nil {
+			logrus.Error(err)
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+	}
+
+  q_limit, _ = ctx.GetQuery("limit")
+  q_offset, _ = ctx.GetQuery("offset")
+
+  var limit, offset int
+  if q_limit == "" {
+    limit = 50
+  } else {
+    limit, err = strconv.Atoi(q_limit)
+    if err != nil {
+      logrus.Error(err)
+      ctx.AbortWithError(http.StatusBadRequest, err)
+      return
+    }
+  }
+
+  if q_offset == "" {
+    offset = 0
+  } else {
+    offset, err = strconv.Atoi(q_offset)
+    if err != nil {
+      logrus.Error(err)
+      ctx.AbortWithError(http.StatusBadRequest, err)
+      return
+    }
+  }
+
+	banner_list, err := h.useCase.GetBanners(ctx, tag_id, feature_id, limit, offset)
+  if err != nil {
+    logrus.Error(err)
+    ctx.AbortWithError(http.StatusInternalServerError, err)
+    return
+  }
+  ctx.JSON(http.StatusOK, banner_list)
 }
 
 type CreateBanner struct {
@@ -55,9 +130,15 @@ func (h *Handler) Create(ctx *gin.Context) {
 		IsActive:  inp.IsActive,
 	}
 	banner_id, err := h.useCase.CreateBanner(ctx, banner, user)
+  if err != nil {
+    if err == bn.ErrBannerAlreadyExists {
+      ctx.AbortWithError(http.StatusConflict, err)
+    }
+  }
 	if err != nil {
 		logrus.Errorf("error returned from useCase.CreateBanner: %s", err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)
+    return
 	}
 	ctx.JSON(http.StatusCreated, &createBannerResponse{
 		BannerId: banner_id,
@@ -65,8 +146,12 @@ func (h *Handler) Create(ctx *gin.Context) {
 }
 
 func (h *Handler) Delete(ctx *gin.Context) {
-  id := ctx.Param("id")
-	// user := ctx.MustGet(auth.CtxUserKey).(*models.User)
+	id := ctx.Param("id")
+	user := ctx.MustGet(auth.CtxUserKey).(*models.User)
+	if user.Role != "admin" {
+		ctx.AbortWithStatus(http.StatusForbidden)
+		return
+	}
 	banner_id, err := strconv.Atoi(id)
 	if err != nil {
 		logrus.Error(err)
@@ -85,7 +170,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 			return
 		}
 	}
-  ctx.AbortWithStatus(http.StatusNoContent)
+	ctx.AbortWithStatus(http.StatusNoContent)
 }
 
 func (h *Handler) Update(ctx *gin.Context) {

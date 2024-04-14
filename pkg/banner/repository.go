@@ -18,7 +18,7 @@ type Repository interface {
     feature_id int,
     limit int,
     offset int,
-	) ([]*models.Banner, error)
+	) ([]models.Banner, error)
 	CreateBanner(
 		ctx context.Context,
 		banner *models.Banner,

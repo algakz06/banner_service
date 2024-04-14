@@ -22,7 +22,7 @@ CREATE TABLE banner (
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (id, version_number)
+  UNIQUE (id, version_number),
 );
 
 CREATE TABLE banner_tag (

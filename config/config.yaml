@@ -1,0 +1,14 @@
+port: 3333
+
+auth:
+  hash_salt: "5BbzY96E4LdnYKq69e6iBsaaVzNJ6wxJ9CHmVrCPSEA="
+  signing_key: "7/ZW1Au4BLGAQ68iU1WYEqWsK7G5D3QrBFxFFpPoMjU="
+  token_ttl: 86400
+
+
+db:
+  port: 5436
+  host: "localhost"
+  username: "postgres"
+  db: "postgres"
+  sslmode: "disable"

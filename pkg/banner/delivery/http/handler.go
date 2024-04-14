@@ -44,7 +44,7 @@ func (h *Handler) UserGet(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-  var tag_ids []int
+	var tag_ids []int
 	err = json.Unmarshal([]byte(q_tag_ids), &tag_ids)
 	if err != nil {
 		logrus.Error(err)
@@ -53,13 +53,13 @@ func (h *Handler) UserGet(ctx *gin.Context) {
 	}
 
 	banner, err := h.useCase.GetUserBanner(ctx, tag_ids, feature_id)
-  if user.Role == "user" {
-    if !banner.IsActive {
-      ctx.AbortWithStatus(http.StatusNotFound)
-      return
-    }
-  }
-  ctx.JSON(http.StatusOK, banner.Content)
+	if user.Role == "user" {
+		if !banner.IsActive {
+			ctx.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+	}
+	ctx.JSON(http.StatusOK, banner.Content)
 }
 
 func (h *Handler) Get(ctx *gin.Context) {
@@ -208,5 +208,49 @@ func (h *Handler) Delete(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusNoContent)
 }
 
+type UpdateBanner struct {
+	BannerId  int                    `json:"banner_id"`
+	TagIds    []int                  `json:"tag_ids"`
+	FeatureId int                    `json:"feature_id"`
+	Content   map[string]interface{} `json:"content"`
+	IsActive  bool                   `json:"is_active"`
+}
+
 func (h *Handler) Update(ctx *gin.Context) {
+	id := ctx.Param("id")
+	banner_id, err := strconv.Atoi(id)
+	if err != nil {
+    logrus.Errorf("error occured converting param id to int: %s", err.Error())
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	inp := new(UpdateBanner)
+	if err := ctx.BindJSON(inp); err != nil {
+		logrus.Errorf("error occured while processing json to UpdateBanner struct: %s", err.Error())
+		ctx.AbortWithStatus(http.StatusUnprocessableEntity)
+		return
+	}
+	user := ctx.MustGet(auth.CtxUserKey).(*models.User)
+  if user.Role != "admin" {
+    ctx.AbortWithStatus(http.StatusForbidden)
+    return
+  }
+	banner := &models.Banner{
+		BannerId:  banner_id,
+		TagIds:    inp.TagIds,
+		FeatureId: inp.FeatureId,
+		Content:   inp.Content,
+		IsActive:  inp.IsActive,
+	}
+  err = h.useCase.UpdateBanner(ctx, banner)
+  if err == bn.ErrNoBannerFound {
+    ctx.AbortWithStatus(http.StatusNotFound)
+    return
+  }
+  if err != nil {
+    ctx.AbortWithStatus(http.StatusInternalServerError)
+    return
+  }
+  ctx.AbortWithStatus(http.StatusOK)
+  return
 }

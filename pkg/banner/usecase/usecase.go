@@ -50,7 +50,8 @@ func (b *BannerUseCase) CreateBanner(
 }
 
 func (b *BannerUseCase) UpdateBanner(ctx context.Context, banner *models.Banner) error {
-	return nil
+  err := b.bannerRepo.UpdateBanner(ctx, banner)
+  return err
 }
 
 func (b *BannerUseCase) DeleteBanner(ctx context.Context, banner_id int) error {

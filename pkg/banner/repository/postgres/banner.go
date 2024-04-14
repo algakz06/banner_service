@@ -94,7 +94,6 @@ func (b *BannerPostgres) CreateBanner(
 	}
 
 	var banner_id int
-
 	createBannerQuery := "INSERT INTO banner (feature_id, content, is_active) VALUES ($1, $2, $3) RETURNING id"
 	err = tx.QueryRow(ctx, createBannerQuery, banner.FeatureId, banner.Content, banner.IsActive).
 		Scan(&banner_id)
@@ -139,6 +138,74 @@ func (b *BannerPostgres) CreateBanner(
 }
 
 func (b *BannerPostgres) UpdateBanner(ctx context.Context, banner *models.Banner) error {
+	getOriginalBannerQuery := "SELECT 1 FROM banner WHERE id = $1"
+	commandTag, err := b.dbpool.Exec(ctx, getOriginalBannerQuery, banner.BannerId)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return bn.ErrNoBannerFound
+	}
+	createBannerQuery := `
+  INSERT INTO banner (feature_id, content, is_active, original_banner_id)
+  VALUES ($1, $2, $3, $4) 
+  RETURNING id
+  `
+	tx, err := b.dbpool.Begin(ctx)
+	if err != nil {
+		logrus.Errorf("error occured while starting tx: %s", err.Error())
+		return err
+	}
+
+	var banner_id int
+	err = tx.QueryRow(ctx, createBannerQuery, banner.FeatureId, banner.Content, banner.IsActive, banner.BannerId).
+		Scan(&banner_id)
+	if err != nil {
+		logrus.Errorf("error occured while inserting to banner table: %s", err.Error())
+		tx.Rollback(ctx)
+		return err
+	}
+
+	addTagsQuery := fmt.Sprintf(
+		"INSERT INTO banner_tag (banner_id, tag_id) VALUES (%s, $1)",
+		fmt.Sprint(banner_id),
+	)
+	for _, tag_id := range banner.TagIds {
+		commandTag, err := tx.Exec(ctx, addTagsQuery, tag_id)
+		if err != nil {
+			logrus.Errorf(
+				"error occured while inserting to banner_tag table with tag_id=%s: %s",
+				fmt.Sprint(tag_id),
+				err.Error(),
+			)
+			tx.Rollback(ctx)
+			return err
+		}
+		if commandTag.RowsAffected() != 1 {
+			logrus.Errorf("expected one row to be affected, got %d", commandTag.RowsAffected())
+			tx.Rollback(ctx)
+			return fmt.Errorf(
+				"expected one row to be affected, got %d",
+				commandTag.RowsAffected(),
+			)
+		}
+	}
+
+	original_banner_id := 0
+	updateFirstBannerQuery := "UPDATE banner SET version_number = 2 WHERE id = $1 RETURNING original_banner_id"
+	_ = tx.QueryRow(ctx, updateFirstBannerQuery, banner.BannerId).Scan(&original_banner_id)
+	if original_banner_id != 0 {
+		updateSecondBannerQuery := "UPDATE banner SET version_number = 3 WHERE id = $1 RETURNING original_banner_id"
+		err = tx.QueryRow(ctx, updateSecondBannerQuery, original_banner_id).
+			Scan(&original_banner_id)
+		if err != nil {
+			tx.Commit(ctx)
+			return nil
+		}
+		err = b.DeleteBanner(ctx, original_banner_id)
+		return err
+	}
+	tx.Commit(ctx)
 	return nil
 }
 

@@ -22,7 +22,7 @@ CREATE TABLE banner (
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (id, version_number),
+  UNIQUE (id, version_number)
 );
 
 CREATE TABLE banner_tag (
@@ -31,3 +31,5 @@ CREATE TABLE banner_tag (
   PRIMARY KEY (banner_id, tag_id),
   FOREIGN KEY (banner_id) REFERENCES banner (id) ON DELETE CASCADE
 );
+
+insert into access_level (name) values ('admin'), ('user');

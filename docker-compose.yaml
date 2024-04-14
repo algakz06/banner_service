@@ -30,6 +30,14 @@ services:
     networks:
       - app-network
 
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./schema:/migrations
+    command: ["-path", "/migrations", "-database",  "postgres://postgres:${DB_PASSWORD}@db:5436/postgres?sslmode=disable", "up"]
+    depends_on: 
+       - db
+
 networks:
   app-network:
     driver: bridge

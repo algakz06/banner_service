@@ -9,19 +9,40 @@
 
 ## Описание проекта
 REST API сервис баннеров с JWT-аутентификацией
+### Стек технологий
+Язык программирования -- Golang
+Фреймворк -- gin-gonic/gin
+База данных -- PostgreSQL
+Система развертывания -- Docker && docker-compose
+
 ### Routes
-[x] POST auth/sign-in -- путь аутентификации
-[x] POST auth/sign-up -- путь регистрации
-[x] GET api/user_banner -- путь получения баннера для пользователя
-[x] GET api/banner -- путь получения баннеров по tag_id и/или feature_id
-[x] POST api/banner -- путь создания баннера
-[x] PATCH api/banner/:id -- путь изменения баннера
-[x] DELETE api/banner/:id -- путь удаления баннера
-[] DELETE api/banner -- удаление баннеров по tag_id и/или feature_id
-[] GET api/banner/:id -- получения 3 последних версий баннера
+- [x] POST auth/sign-in -- путь аутентификации
+- [x] POST auth/sign-up -- путь регистрации
+- [x] GET api/user_banner -- путь получения баннера для пользователя
+- [x] GET api/banner -- путь получения баннеров по tag_id и/или feature_id
+- [x] POST api/banner -- путь создания баннера
+- [x] PATCH api/banner/:id -- путь изменения баннера
+- [x] DELETE api/banner/:id -- путь удаления баннера
+- [] DELETE api/banner -- удаление баннеров по tag_id и/или feature_id
+- [] GET api/banner/:id -- получения 3 последних версий баннера
 
 ### Слои приложения
 - Models layer
 - Repository layer
 - UseCase layer
 - Delivery layer
+
+## Инструкция по запуску сервиса локально
+Скопируйте репозиторий и перейдите в него
+```bash
+git clone https://github.com/algakz06/banner_service.git && cd banner_service
+```
+Создайте .env файл из .env.example и отредактируйте его
+```bash
+cp .env.example .env && vi .env
+```
+Запустите docker-compose
+```bash
+docker-compose up --build -d
+```
+Готово! api доступно на пути localhost:8080

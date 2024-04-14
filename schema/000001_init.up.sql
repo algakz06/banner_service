@@ -33,3 +33,4 @@ CREATE TABLE banner_tag (
 );
 
 insert into access_level (name) values ('admin'), ('user');
+insert into users (username, hashed_password, access_level) values ('admin', '3335e880d573848bc02e9550036e29e5d428d373', 1)

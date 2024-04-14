@@ -3,16 +3,13 @@ services:
   app:
     container_name: go_app
     build: .
+    command: ./wait-for-postgres.sh db ./main
     ports:
       - "8080:8080"
     depends_on:
       - db
-    environment:
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASSWORD=password123
-      - DB_NAME=postgres
-      - DB_PORT=5432
+    env_file:
+      - ./.env
     networks:
       - app-network
 
@@ -32,11 +29,14 @@ services:
 
   migrate:
     image: migrate/migrate
+    networks:
+        - app-network
     volumes:
       - ./schema:/migrations
-    command: ["-path", "/migrations", "-database",  "postgres://postgres:${DB_PASSWORD}@db:5436/postgres?sslmode=disable", "up"]
+    command: ["-path", "/migrations", "-database",  "postgres://postgres:test@db:5432/postgres?sslmode=disable", "up"]
     depends_on: 
        - db
+       - app
 
 networks:
   app-network:

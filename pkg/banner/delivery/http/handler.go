@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/algakz/banner_service/models"
 	"github.com/algakz/banner_service/pkg/auth"
@@ -57,12 +59,33 @@ func (h *Handler) Create(ctx *gin.Context) {
 		logrus.Errorf("error returned from useCase.CreateBanner: %s", err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
-  ctx.JSON(http.StatusCreated, &createBannerResponse{
-    BannerId: banner_id,
-  })
+	ctx.JSON(http.StatusCreated, &createBannerResponse{
+		BannerId: banner_id,
+	})
 }
 
 func (h *Handler) Delete(ctx *gin.Context) {
+  id := ctx.Param("id")
+	// user := ctx.MustGet(auth.CtxUserKey).(*models.User)
+	banner_id, err := strconv.Atoi(id)
+	if err != nil {
+		logrus.Error(err)
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	err = h.useCase.DeleteBanner(ctx, banner_id)
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "error") {
+			logrus.Error(err)
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		} else {
+			logrus.Error(err)
+			ctx.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+	}
+  ctx.AbortWithStatus(http.StatusNoContent)
 }
 
 func (h *Handler) Update(ctx *gin.Context) {

@@ -8,13 +8,13 @@ import (
 )
 
 type BannerUseCase struct {
-  bannerRepo banner.Repository
+	bannerRepo banner.Repository
 }
 
-func NewBannerUseCase (bannerRepo banner.Repository) *BannerUseCase {
-  return &BannerUseCase{
-    bannerRepo: bannerRepo,
-  }
+func NewBannerUseCase(bannerRepo banner.Repository) *BannerUseCase {
+	return &BannerUseCase{
+		bannerRepo: bannerRepo,
+	}
 }
 
 func (b *BannerUseCase) GetUserBanner(
@@ -40,17 +40,21 @@ func (b *BannerUseCase) CreateBanner(
 	banner *models.Banner,
 	user *models.User,
 ) (int, error) {
-  banner_id, err := b.bannerRepo.CreateBanner(ctx, banner, user)
-  if err != nil {
-    return 0, err
-  }
+	banner_id, err := b.bannerRepo.CreateBanner(ctx, banner, user)
+	if err != nil {
+		return 0, err
+	}
 	return banner_id, nil
 }
 
 func (b *BannerUseCase) UpdateBanner(ctx context.Context, banner *models.Banner) error {
-  return nil
+	return nil
 }
 
 func (b *BannerUseCase) DeleteBanner(ctx context.Context, banner_id int) error {
-  return nil
+	err := b.bannerRepo.DeleteBanner(ctx, banner_id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

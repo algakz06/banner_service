@@ -75,7 +75,7 @@ func (b *BannerPostgres) CreateBanner(
 		if commandTag.RowsAffected() != 1 {
 			logrus.Errorf("expected one row to be affected, got %d", commandTag.RowsAffected())
 			tx.Rollback(ctx)
-			return 0, err
+			return 0, fmt.Errorf("expected one row to be affected, got %d", commandTag.RowsAffected())
 		}
 	}
   err = tx.Commit(ctx)
@@ -93,5 +93,19 @@ func (b *BannerPostgres) UpdateBanner(ctx context.Context, banner *models.Banner
 }
 
 func (b *BannerPostgres) DeleteBanner(ctx context.Context, banner_id int) error {
-	return nil
+  query := "DELETE FROM banner WHERE id = $1"
+  commandTag, err := b.dbpool.Exec(ctx, query, banner_id)
+
+  if err != nil {
+    logrus.Errorf("error occured while deleting banner by id=%s, error: %s", fmt.Sprint(banner_id), err.Error())
+    return err
+  }
+
+  if commandTag.RowsAffected() != 1 {
+    err = fmt.Errorf("expected one row to be affected, got %d", commandTag.RowsAffected())
+    logrus.Error(err)
+    return err
+  }
+
+  return nil
 }

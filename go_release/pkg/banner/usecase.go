@@ -7,17 +7,17 @@ import (
 )
 
 type UseCase interface {
-  	GetUserBanner(
+	GetUserBanner(
 		ctx context.Context,
 		tag_ids []int,
 		feature_id int,
 	) (models.Banner, error)
 	GetBanners(
 		ctx context.Context,
-    tag_id int,
-    feature_id int,
-    limit int,
-    offset int,
+		tag_id int,
+		feature_id int,
+		limit int,
+		offset int,
 	) ([]models.Banner, error)
 	CreateBanner(
 		ctx context.Context,

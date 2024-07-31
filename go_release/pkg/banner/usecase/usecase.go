@@ -6,7 +6,6 @@ import (
 	"github.com/algakz/banner_service/models"
 	"github.com/algakz/banner_service/pkg/banner"
 )
-
 type BannerUseCase struct {
 	bannerRepo banner.Repository
 }
@@ -22,8 +21,8 @@ func (b *BannerUseCase) GetUserBanner(
 	tag_ids []int,
 	feature_id int,
 ) (models.Banner, error) {
-  banner, err := b.bannerRepo.GetUserBanner(ctx, tag_ids, feature_id)
-  return banner, err
+	banner, err := b.bannerRepo.GetUserBanner(ctx, tag_ids, feature_id)
+	return banner, err
 }
 
 func (b *BannerUseCase) GetBanners(
@@ -33,7 +32,7 @@ func (b *BannerUseCase) GetBanners(
 	limit int,
 	offset int,
 ) ([]models.Banner, error) {
-  banners, err := b.bannerRepo.GetBanners(ctx, tag_id, feature_id, limit, offset)
+	banners, err := b.bannerRepo.GetBanners(ctx, tag_id, feature_id, limit, offset)
 	return banners, err
 }
 
@@ -50,8 +49,8 @@ func (b *BannerUseCase) CreateBanner(
 }
 
 func (b *BannerUseCase) UpdateBanner(ctx context.Context, banner *models.Banner) error {
-  err := b.bannerRepo.UpdateBanner(ctx, banner)
-  return err
+	err := b.bannerRepo.UpdateBanner(ctx, banner)
+	return err
 }
 
 func (b *BannerUseCase) DeleteBanner(ctx context.Context, banner_id int) error {

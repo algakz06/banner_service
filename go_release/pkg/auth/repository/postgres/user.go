@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/algakz/banner_service/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
+
+	"github.com/algakz/banner_service/models"
 )
 
 type User struct {

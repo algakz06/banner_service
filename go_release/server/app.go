@@ -50,9 +50,9 @@ func NewApp() *App {
 
 func (a *App) Run(port string) error {
 	logrus.SetFormatter(new(logrus.JSONFormatter))
-  logrus.SetOutput(os.Stdout)
-  logrus.SetLevel(logrus.DebugLevel)
-  logrus.Info("configs for logrus setted")
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.Info("configs for logrus setted")
 	// Init gin handler
 	router := gin.Default()
 	router.Use(

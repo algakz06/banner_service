@@ -220,7 +220,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
 	banner_id, err := strconv.Atoi(id)
 	if err != nil {
-    logrus.Errorf("error occured converting param id to int: %s", err.Error())
+		logrus.Errorf("error occured converting param id to int: %s", err.Error())
 		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -231,10 +231,10 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	user := ctx.MustGet(auth.CtxUserKey).(*models.User)
-  if user.Role != "admin" {
-    ctx.AbortWithStatus(http.StatusForbidden)
-    return
-  }
+	if user.Role != "admin" {
+		ctx.AbortWithStatus(http.StatusForbidden)
+		return
+	}
 	banner := &models.Banner{
 		BannerId:  banner_id,
 		TagIds:    inp.TagIds,
@@ -242,15 +242,15 @@ func (h *Handler) Update(ctx *gin.Context) {
 		Content:   inp.Content,
 		IsActive:  inp.IsActive,
 	}
-  err = h.useCase.UpdateBanner(ctx, banner)
-  if err == bn.ErrNoBannerFound {
-    ctx.AbortWithStatus(http.StatusNotFound)
-    return
-  }
-  if err != nil {
-    ctx.AbortWithStatus(http.StatusInternalServerError)
-    return
-  }
-  ctx.AbortWithStatus(http.StatusOK)
-  return
+	err = h.useCase.UpdateBanner(ctx, banner)
+	if err == bn.ErrNoBannerFound {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	ctx.AbortWithStatus(http.StatusOK)
+	return
 }
